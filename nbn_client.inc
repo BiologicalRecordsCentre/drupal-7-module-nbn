@@ -70,7 +70,7 @@ class NBNClient
       elseif ($json === '') {
         // Check for no results returned.
         $response = array();
-        $response['error'] = 'The NBN Gateway responded with no data. Ensure the settings are correct.';
+        $response['error'] = 'The NBN Atlas responded with no data. Ensure the settings are correct.';
       }
       else {
         // Decode response.
@@ -269,20 +269,18 @@ class NBNClient
         return $response;
     }
     
-    function GetOrganisationDatasets($organisation)
+    // Get the list of data resources from a given provider.
+    function GetProviderResources($provider)
     {
-        $url = "https://data.nbn.org.uk/api/organisations/" . $organisation . 
-                "/datasets";
+        $url = "https://registry.nbnatlas.org/ws/dataProvider/" . $provider;
         $response = $this->CurlGetString($url);
-        return $response;
+        if(array_key_exists('error', $response)) {
+          return $response;
+        }
+        else {
+          return $response['dataResources'];
+        }
     }
     
-    function GetOrganisationContributedDatasets($organisation)
-    {
-        $url = "https://data.nbn.org.uk/api/organisations/" . $organisation . 
-                "/contributedDatasets";
-        $response = $this->CurlGetString($url);
-        return $response;
-    }
     
 }

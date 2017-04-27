@@ -92,9 +92,9 @@ function nbn_preprocess_for_theme (&$variables) {
   // Preprocees data unless there is an error
   if (!array_key_exists('error', $data)) {
     
-    // Link titles to pages (Do before stripping fields else we might lose href)
-    if ($conf['options']['title_link'] &&
-            $conf['fields']['title']) {
+    // Link names to pages (Do before stripping fields else we might lose href)
+    if ($conf['options']['name_link'] &&
+            $conf['fields']['name']) {
       nbn_preprocess_title_link($variables);
     }
     
@@ -137,11 +137,10 @@ function nbn_preprocess_title_link(&$variables) {
   // Link titles to pages
   $data = $variables['data'];
   $conf = $variables['conf'];
+  $link_url = $conf['options']['link_url'];
 
   foreach($data as $key => $row) {
-    $variables['data'][$key]['title'] = "<a href='{$row['href']}'>{$row['title']}</a>";
-    unset($variables['data'][$key]['datasetLicence']);
-    unset($variables['data'][$key]['licenceID']);
+    $variables['data'][$key]['name'] = "<a href='$link_url{$row['uid']}'>{$row['name']}</a>";
   }
 }
   

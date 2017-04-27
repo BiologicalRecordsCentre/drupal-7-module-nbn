@@ -1,0 +1,5 @@
+name = NBN Tools
+description = Provides panel panes which display content from the National Biodiversity Network Gateway web services.
+core = 7.x
+dependencies[] = ctools
+dependencies[] = panels

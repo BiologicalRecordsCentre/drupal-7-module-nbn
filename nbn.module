@@ -1,0 +1,182 @@
+<?php
+
+/**
+ * @file
+ * A panel panes module to allow you to add  NBN stuff to a panel
+ * selected by context. 
+ */
+
+/**
+* Implements hook_ctools_plugin_directory().
+*/
+function nbn_ctools_plugin_directory($owner, $plugin_type) {
+  if ($owner == 'ctools' && $plugin_type == 'content_types') {
+    return 'plugins/' . $plugin_type;
+  }
+}
+
+/**
+ * Implements hook_theme().
+ */
+function nbn_theme($existing, $type, $theme, $path) {
+  $themes =  array(
+      'nbn_unformatted' => array(
+          'path' => $path . '/templates',
+          'template' => 'nbn-unformatted',
+          'variables' => array(
+              'data' => null,
+              'conf' => null,
+              'wrapper_classes' => null,
+              'row_classes' => null,
+              'field_classes' => null,
+          ),
+      ),
+      'nbn_html_list' => array(
+          'path' => $path . '/templates',
+          'template' => 'nbn-html-list',
+          'variables' => array(
+              'data' => null,
+              'conf' => null,
+              'wrapper_classes' => null,
+              'row_classes' => null,
+              'field_classes' => null,
+          ),
+      ),
+      'nbn_table' => array(
+          'path' => $path . '/templates',
+          'template' => 'nbn-table',
+          'variables' => array(
+              'data' => null,
+              'conf' => null,
+              'wrapper_classes' => null,
+              'row_classes' => null,
+              'field_classes' => null,
+          ),
+      ),
+  );
+  return $themes;
+}
+
+/**
+ * Implements hook_template_preprocess().
+ */
+function template_preprocess_nbn_unformatted(&$variables) {
+  nbn_preprocess_for_theme($variables);
+}
+
+/**
+ * Implements hook_template_preprocess().
+ */
+function template_preprocess_nbn_table(&$variables) {
+  nbn_preprocess_for_theme($variables);
+}
+
+/**
+ * Implements hook_template_preprocess().
+ */
+function template_preprocess_nbn_html_list(&$variables) {
+  nbn_preprocess_for_theme($variables);
+}
+
+/**
+ * Performs preprocessing of data for all themes templates.
+ */
+function nbn_preprocess_for_theme (&$variables) {
+  // Include nbn.css
+  $css_path = drupal_get_path('module', 'nbn') . '/css/nbn.css';
+  drupal_add_css($css_path);
+  
+  $data = $variables['data'];
+  $conf = $variables['conf'];
+  
+  // Preprocees data unless there is an error
+  if (!array_key_exists('error', $data)) {
+    
+    // Link titles to pages (Do before stripping fields else we might lose href)
+    if ($conf['options']['title_link'] &&
+            $conf['fields']['title']) {
+      nbn_preprocess_title_link($variables);
+    }
+    
+    // Strip unwanted fields from data array
+    nbn_preprocess_data($variables);
+    
+    // Add wrapper classes
+    $variables['wrapper_classes'] = 'nbn-content ';
+    if (isset($conf['options']['wrapper_class'])) {
+      $variables['wrapper_classes'] .= $conf['options']['wrapper_class'];
+    }
+    
+    // Add row classes
+    nbn_preprocess_row_classes($variables);
+    
+    // Add field classes
+    nbn_preprocess_field_classes($variables);
+  }
+}
+
+function nbn_preprocess_data(&$variables) {
+  // Strip unwanted fields from data array.
+  // Depends upon the field names in $conf mathcing those in the data from NBN.
+  $data = &$variables['data'];
+  $conf = $variables['conf'];
+  
+  foreach($conf['fields'] as $field => $enabled) {
+    // Loop through fields
+    if(!$enabled) {
+      // The field is not wanted
+      foreach($data as &$row) {
+        // Loop through each row and remove that field
+        unset($row[$field]);
+      }
+    }
+  }
+}
+
+function nbn_preprocess_title_link(&$variables) {
+  // Link titles to pages
+  $data = $variables['data'];
+  $conf = $variables['conf'];
+
+  foreach($data as $key => $row) {
+    $variables['data'][$key]['title'] = "<a href='{$row['href']}'>{$row['title']}</a>";
+    unset($variables['data'][$key]['datasetLicence']);
+    unset($variables['data'][$key]['licenceID']);
+  }
+}
+  
+function nbn_preprocess_row_classes(&$variables) {
+  $data = $variables['data'];
+  $conf = $variables['conf'];
+  $variables['row_classes'] = array();
+  
+  // Add default class
+  for($i = 0; $i < count($data); $i++) {
+    $variables['row_classes'][$i] = 'nbn-row';
+  }
+  // Add striping classes
+  if ($conf['options']['striping']) {
+    for($i = 0; $i < count($data); $i++) {
+      $variables['row_classes'][$i] .= $i%2 ? ' nbn-even' : ' nbn-odd';
+    }
+    $variables['row_classes'][0] .= ' nbn-first';
+    $variables['row_classes'][count($data) - 1] .= ' nbn-last';
+  }
+}
+
+function nbn_preprocess_field_classes(&$variables) {
+  $conf = $variables['conf'];
+  $variables['field_classes'] = array();
+  
+  foreach($conf['fields'] as $field => $enabled) {
+    // Loop through fields
+    if($enabled) {
+      // Add a default class for each enabled field.
+      $variables['field_classes'][$field] = 'nbn-field';
+      if ($conf['options']['field_class']) {
+        // Add field classes
+        $variables['field_classes'][$field] .= 'nbn-' . strtolower($field);
+      }
+    }
+  }
+}

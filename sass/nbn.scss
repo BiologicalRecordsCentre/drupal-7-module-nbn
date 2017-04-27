@@ -1,0 +1,22 @@
+$border:              #ccc;
+$background_header:   #e5e5e5;
+$background_odd:      #fff;
+$background_even:     #f5f5f5;
+
+.nbn-content {
+  margin: 10px 0;
+  vertical-align: middle;
+  border-bottom: 1px solid $border;
+  .nbn-row {
+    margin: 0;
+    padding: 5px 7px;
+    border: 1px solid $border;
+    border-bottom: 0;
+    &.nbn-odd {
+      background-color: $background_odd;
+    }
+    &.nbn-even {
+      background-color: $background_even;
+    }          
+  }
+}

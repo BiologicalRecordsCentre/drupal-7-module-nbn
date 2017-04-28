@@ -3,24 +3,27 @@ class NBNClient
 {
     private $token;
  
-    function Login($username, $password)
-    {
-        $url = "https://data.nbn.org.uk/api/user/login?username=" . $username. 
-                "&password=" . $password . "&remember=true";
- 
-        $ch = curl_init();
- 
-        curl_setopt($ch, CURLOPT_URL, $url);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
- 
-        $json = curl_exec($ch);
-        $response = $this->CurlDecodeResponse($json, $ch);
-        curl_close($ch);
- 
-        if (property_exists($repsonse, 'token')) {
-          $this->token = rtrim($response->token, "=");
-        }
-    }
+//  REDUNDANT GATEWAY CODE COMMENTED OUT BUT LEFT IN CASE IT IS USEFUL
+//  WHEN EXTENDING THE MODULE IN FUTURE.
+
+//    function Login($username, $password)
+//    {
+//        $url = "https://data.nbn.org.uk/api/user/login?username=" . $username. 
+//                "&password=" . $password . "&remember=true";
+// 
+//        $ch = curl_init();
+// 
+//        curl_setopt($ch, CURLOPT_URL, $url);
+//        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+// 
+//        $json = curl_exec($ch);
+//        $response = $this->CurlDecodeResponse($json, $ch);
+//        curl_close($ch);
+// 
+//        if (property_exists($repsonse, 'token')) {
+//          $this->token = rtrim($response->token, "=");
+//        }
+//    }
  
     function CurlGetString($url)
     {
@@ -90,17 +93,6 @@ class NBNClient
               $response['error'] = 'Unexpected control character found';
               break;
             case JSON_ERROR_SYNTAX:
-              /* If the NBN Gateway is down it may redirect to a status page.
-               * The response looks like
-               * <html><head>
-               * <title>302 Found</title>
-               * </head><body>
-               * <h1>Found</h1>
-               * <p>The document has moved <a href="http://status.nbn.org.uk/">here</a>.</p>
-               * </body></html>
-               * 
-               * This results in a malformed JSON error.
-               */
               $response['error'] = 'Syntax error, malformed JSON';
               break;
             case JSON_ERROR_UTF8:
@@ -118,156 +110,156 @@ class NBNClient
       return $response;
     }
 
-    function GetViceCounties()
-    {
-        $url = "https://data.nbn.org.uk/api/siteBoundaryDatasets/GA000344/siteBoundaries";
-        $response = $this->CurlGetString($url);
-        return $response;
-    }
- 
-    function GetTaxonOutputGroups()
-    {
-        $url = "https://data.nbn.org.uk/api/taxonOutputGroups";
-        $response = $this->CurlGetString($url);
-        return $response;
-    }
- 
-    function GetDesignations()
-    {
-        $url = "https://data.nbn.org.uk/api/designations";
-        $response = $this->CurlGetString($url);
-        return $response;
-    }
- 
-    function GetSiteSpecies($viceCounty, $taxonOutputGroup, $designation)
-    {
-        $url = "https://data.nbn.org.uk/api/taxonObservations/species?featureID=" . 
-                $viceCounty . "&taxonOutputGroup=" . $taxonOutputGroup;
-        if(!(strlen($designation) == 0))
-        {
-            $url = $url . "&designation=" . $designation;
-        }
-        $response = $this->CurlGetString($url);
-        return $response;
-    }
- 
-    function GetSiteDatasets($viceCounty, $taxonOutputGroup, $designation)
-    {
-        $url = "https://data.nbn.org.uk/api/taxonObservations/datasets?featureID=" .
-                $viceCounty . "&taxonOutputGroup=" . $taxonOutputGroup;
-        if(!(strlen($designation) == 0))
-        {
-            $url = $url . "&designation=" . $designation;
-        }
-        $response = $this->CurlGetString($url);
-        return $response;
-    }
- 
-    function GetTenKmSpecies($gridReference)
-    {
-        $url = "https://data.nbn.org.uk/api/taxonObservations/species?gridRef=" .
-                $gridReference;
-        $response = $this->CurlGetString($url);
-        return $response;
-    }
- 
-    function GetTenKmDatasets($gridReference)
-    {
-        $url = "https://data.nbn.org.uk/api/taxonObservations/datasets?gridRef=" .
-                $gridReference;
-        $response = $this->CurlGetString($url);
-        return $response;
-    }
- 
-    function GetTaxonSearchResult($query)
-    {
-        $url = "https://data.nbn.org.uk/api/taxa?q=" . $query;
-        $response = $this->CurlGetString($url);
-        return $response;
-    }
- 
-    function GetTaxonomy($taxonVersionKey)
-    {
-        $url = "https://data.nbn.org.uk/api/taxa/" . $taxonVersionKey;
-        $response = $this->CurlGetString($url);
-        return $response;
-    }
- 
-    function GetTaxonParent($taxonVersionKey)
-    {
-        $url = "https://data.nbn.org.uk/api/taxa/" . $taxonVersionKey . "/parent";
-        $response = $this->CurlGetString($url);
-        return $response;
-    }
- 
-    function GetTaxonParents($taxonVersionKey)
-    {
-        $parents = array();
-        do
-        {
-            $parent = $this->GetTaxonParent($taxonVersionKey);
-            if($parent != NULL)
-            {
-                $taxonVersionKey = $parent->taxonVersionKey;
-                $parents[] = $parent;
-            }
-        }
-        while($parent != NULL);
-        $parents = array_reverse($parents);
-        return $parents;
-    }
- 
-    function GetTaxonChildren($taxonVersionKey)
-    {
-        $url = "https://data.nbn.org.uk/api/taxa/" . $taxonVersionKey . "/children";
-        $response = $this->CurlGetString($url);
-        return $response;
-    }
- 
-    function PostRecordsForDatasetAndGridRef($datasetKey, $gridReference)
-    {
-        $url = "https://data.nbn.org.uk/api/taxonObservations";
-        $postData = array();
-        $postData["datasetKey"] = $datasetKey;
-        $postData["gridRef"] = $gridReference;
-        $response = $this->CurlPostString($url, $postData);
-        return $response;
-    }
- 
-    function GetRecordsForWKTDesignationDates($wkt, $designation, $startYear, $endYear)
-    {
-        $url = "https://data.nbn.org.uk/api/taxonObservations?polygon=" . $wkt .
-                "&designation=" . $designation . "&startYear=" . $startYear . 
-                "&endYear=" . $endYear;
-        $response = $this->CurlGetString($url);
-        return $response;
-    }
- 
-    function PostRecordsForWKTDesignationDates($wkt, $designation, $startyear, $endyear)
-    {
-        $url = "https://data.nbn.org.uk/api/taxonObservations";
-        $postData = array();
-        $postData["polygon"] = $wkt;
-        $postData["designation"] = $designation;
-        $postData["startYear"] = $startyear;
-        $postData["endYear"] = $endyear;
-        $response = $this->CurlPostData($url, $postData);
-        return $response;
-    }
- 
-    function PostRecordsForWKTDesignationDatasetDates($wkt, $designation, 
-            $datasetkey, $startyear, $endyear)
-    {
-        $url = "https://data.nbn.org.uk/api/taxonObservations";
-        $postData = array();
-        $postData["polygon"] = $wkt;
-        $postData["designation"] = $designation;
-        $postData["datasetKey"] = $datasetkey;
-        $postData["startYear"] = $startyear;
-        $postData["endYear"] = $endyear;
-        $response = $this->CurlPostData($url, $postData);
-        return $response;
-    }
+//    function GetViceCounties()
+//    {
+//        $url = "https://data.nbn.org.uk/api/siteBoundaryDatasets/GA000344/siteBoundaries";
+//        $response = $this->CurlGetString($url);
+//        return $response;
+//    }
+// 
+//    function GetTaxonOutputGroups()
+//    {
+//        $url = "https://data.nbn.org.uk/api/taxonOutputGroups";
+//        $response = $this->CurlGetString($url);
+//        return $response;
+//    }
+// 
+//    function GetDesignations()
+//    {
+//        $url = "https://data.nbn.org.uk/api/designations";
+//        $response = $this->CurlGetString($url);
+//        return $response;
+//    }
+// 
+//    function GetSiteSpecies($viceCounty, $taxonOutputGroup, $designation)
+//    {
+//        $url = "https://data.nbn.org.uk/api/taxonObservations/species?featureID=" . 
+//                $viceCounty . "&taxonOutputGroup=" . $taxonOutputGroup;
+//        if(!(strlen($designation) == 0))
+//        {
+//            $url = $url . "&designation=" . $designation;
+//        }
+//        $response = $this->CurlGetString($url);
+//        return $response;
+//    }
+// 
+//    function GetSiteDatasets($viceCounty, $taxonOutputGroup, $designation)
+//    {
+//        $url = "https://data.nbn.org.uk/api/taxonObservations/datasets?featureID=" .
+//                $viceCounty . "&taxonOutputGroup=" . $taxonOutputGroup;
+//        if(!(strlen($designation) == 0))
+//        {
+//            $url = $url . "&designation=" . $designation;
+//        }
+//        $response = $this->CurlGetString($url);
+//        return $response;
+//    }
+// 
+//    function GetTenKmSpecies($gridReference)
+//    {
+//        $url = "https://data.nbn.org.uk/api/taxonObservations/species?gridRef=" .
+//                $gridReference;
+//        $response = $this->CurlGetString($url);
+//        return $response;
+//    }
+// 
+//    function GetTenKmDatasets($gridReference)
+//    {
+//        $url = "https://data.nbn.org.uk/api/taxonObservations/datasets?gridRef=" .
+//                $gridReference;
+//        $response = $this->CurlGetString($url);
+//        return $response;
+//    }
+// 
+//    function GetTaxonSearchResult($query)
+//    {
+//        $url = "https://data.nbn.org.uk/api/taxa?q=" . $query;
+//        $response = $this->CurlGetString($url);
+//        return $response;
+//    }
+// 
+//    function GetTaxonomy($taxonVersionKey)
+//    {
+//        $url = "https://data.nbn.org.uk/api/taxa/" . $taxonVersionKey;
+//        $response = $this->CurlGetString($url);
+//        return $response;
+//    }
+// 
+//    function GetTaxonParent($taxonVersionKey)
+//    {
+//        $url = "https://data.nbn.org.uk/api/taxa/" . $taxonVersionKey . "/parent";
+//        $response = $this->CurlGetString($url);
+//        return $response;
+//    }
+// 
+//    function GetTaxonParents($taxonVersionKey)
+//    {
+//        $parents = array();
+//        do
+//        {
+//            $parent = $this->GetTaxonParent($taxonVersionKey);
+//            if($parent != NULL)
+//            {
+//                $taxonVersionKey = $parent->taxonVersionKey;
+//                $parents[] = $parent;
+//            }
+//        }
+//        while($parent != NULL);
+//        $parents = array_reverse($parents);
+//        return $parents;
+//    }
+// 
+//    function GetTaxonChildren($taxonVersionKey)
+//    {
+//        $url = "https://data.nbn.org.uk/api/taxa/" . $taxonVersionKey . "/children";
+//        $response = $this->CurlGetString($url);
+//        return $response;
+//    }
+// 
+//    function PostRecordsForDatasetAndGridRef($datasetKey, $gridReference)
+//    {
+//        $url = "https://data.nbn.org.uk/api/taxonObservations";
+//        $postData = array();
+//        $postData["datasetKey"] = $datasetKey;
+//        $postData["gridRef"] = $gridReference;
+//        $response = $this->CurlPostString($url, $postData);
+//        return $response;
+//    }
+// 
+//    function GetRecordsForWKTDesignationDates($wkt, $designation, $startYear, $endYear)
+//    {
+//        $url = "https://data.nbn.org.uk/api/taxonObservations?polygon=" . $wkt .
+//                "&designation=" . $designation . "&startYear=" . $startYear . 
+//                "&endYear=" . $endYear;
+//        $response = $this->CurlGetString($url);
+//        return $response;
+//    }
+// 
+//    function PostRecordsForWKTDesignationDates($wkt, $designation, $startyear, $endyear)
+//    {
+//        $url = "https://data.nbn.org.uk/api/taxonObservations";
+//        $postData = array();
+//        $postData["polygon"] = $wkt;
+//        $postData["designation"] = $designation;
+//        $postData["startYear"] = $startyear;
+//        $postData["endYear"] = $endyear;
+//        $response = $this->CurlPostData($url, $postData);
+//        return $response;
+//    }
+// 
+//    function PostRecordsForWKTDesignationDatasetDates($wkt, $designation, 
+//            $datasetkey, $startyear, $endyear)
+//    {
+//        $url = "https://data.nbn.org.uk/api/taxonObservations";
+//        $postData = array();
+//        $postData["polygon"] = $wkt;
+//        $postData["designation"] = $designation;
+//        $postData["datasetKey"] = $datasetkey;
+//        $postData["startYear"] = $startyear;
+//        $postData["endYear"] = $endyear;
+//        $response = $this->CurlPostData($url, $postData);
+//        return $response;
+//    }
     
     // Get the list of data resources from a given provider.
     function GetProviderResources($provider)
